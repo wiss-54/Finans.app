@@ -14,6 +14,15 @@ const money = new Intl.NumberFormat("tr-TR", {
   maximumFractionDigits: 2,
 });
 
+type CurrencyCode = "TRY" | "USD" | "EUR" | "GBP";
+
+const EXCHANGE_RATES: Record<CurrencyCode, number> = {
+  TRY: 1,
+  USD: 46.00,
+  EUR: 53.00,
+  GBP: 60.00,
+};
+
 function newId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -25,6 +34,7 @@ export function FinanceApp() {
   const [items, setItems] = useState<Transaction[]>([]);
   const [kind, setKind] = useState<TransactionKind>("expense");
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState<CurrencyCode>("TRY");
   const [note, setNote] = useState("");
 
   useEffect(() => {
@@ -51,13 +61,15 @@ export function FinanceApp() {
     e.preventDefault();
     const value = Number(amount.replace(",", "."));
     if (!Number.isFinite(value) || value <= 0) return;
+    const rate = EXCHANGE_RATES[currency];
+    const amountInTry = value * rate;
     const trimmed = note.trim();
     if (!trimmed) return;
 
     const row: Transaction = {
       id: newId(),
       kind,
-      amount: value,
+      amount: amountInTry,
       note: trimmed,
       createdAt: new Date().toISOString(),
     };
@@ -111,7 +123,7 @@ export function FinanceApp() {
               Gider
             </label>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-zinc-600 dark:text-zinc-400">Tutar</span>
               <input
@@ -123,14 +135,27 @@ export function FinanceApp() {
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-zinc-600 dark:text-zinc-400">Açıklama</span>
-              <input
+              <span className="text-zinc-600 dark:text-zinc-400">Para birimi</span>
+              <select
                 className="rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-                placeholder="Örn. Market, maaş"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-              />
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
+                >
+                  <option value="TRY">TRY</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                </select>
             </label>
+            <label className="flex flex-col gap-1 text-sm">
+  <span className="text-zinc-600 dark:text-zinc-400">Açıklama</span>
+  <input
+    className="rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+    placeholder="Örn. Market, maaş"
+    value={note}
+    onChange={(e) => setNote(e.target.value)}
+  />
+</label>
           </div>
           <button
             type="submit"
