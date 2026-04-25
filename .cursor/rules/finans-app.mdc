@@ -1,0 +1,57 @@
+---
+description: finans-app proje bağlamı — her sohbette hatırlanacak özet
+alwaysApply: true
+---
+
+# finans-app — kalıcı bağlam
+
+Aşağıyı ihtiyacına göre güncelle; agent her sohbette bunu okur.
+
+## Teknik
+
+- Next.js 16, React 19, TypeScript, Tailwind CSS 4
+- Komutlar: `npm run dev`, `npm run build`, `npm run lint`
+
+## Ürün / hedef
+
+- İlk proje: web tabanlı **kişisel finans** uygulaması (adım adım büyüt)
+- Öğrenme hedefi (yavaş yavaş): JavaScript → TypeScript → React → Next.js → gerektiğinde Node.js
+- Veri: başlangıçta tarayıcı (localStorage vb.); API / Node sonra
+
+## Staj ve portföy (GitHub + LinkedIn) — unutma
+
+- **Amaç:** GitHub ve LinkedIn profilini doldurmak; **staj** arayışı.
+- **Tempo:** Yaklaşık **bir ayda 10 proje** hedefi var; hız önemli ama repolar **profesyonel** görünmeli (yarım bırakılmış his vermesin).
+- **GitHub:** Düzenli **commit** (anlamlı mesajlar), açıklayıcı repo açıklaması, gerekirse **README** (kurulum, ekran görüntüsü, stack). Mümkünse `main` temiz, `lint` / `build` kırılmadan.
+- **LinkedIn:** Proje bitince veya önemli milestone’da paylaşım (ne öğrendin, ne yaptın, link); profil “boş” kalmasın diye ara sıra teknik not / gönderi taslağı işe yarar.
+- **Agent beklentisi:** Bu repoda özellik eklerken **portföy kalitesi** çubuğunu gözet: okunabilir yapı, tutarlı UI, gereksiz dağınıklık yok. Uygun yerde **README güncellemesi** veya **commit’e uygun küçük PR açıklaması** önerebilir; LinkedIn için **kısa Türkçe gönderi taslağı** önerebilir (kullanıcı isterse kullanır).
+
+## Tercihler
+
+- Kullanıcıyla iletişim dili: Türkçe
+- Kod: İngilizce isimlendirme; UI metinleri Türkçe olabilir
+- Kullanıcı uzun süredir kod yazmıyor; terimlere uzak — aşağıdaki iletişim kuralları **zorunlu**
+
+## İletişim ve terimler (agent için zorunlu)
+
+1. **Sade dil** — Kısa cümleler, günlük Türkçe; gereksiz jargon biriktirme.
+2. **Terim kullanınca şunu yap** — İngilizce veya teknik bir kelime (ör. `state`, `props`, `component`) kullandığında, aynı akışta şu üçlüyü ver:
+   - **Ne demek:** tek cümlelik düz açıklama
+   - **Bu projede ne işe yarar:** finans uygulaması bağlamında 1 cümle
+   - **Nasıl kullanıyoruz:** dosya / buton / form gibi somut örnekle 1 cümle
+3. **İlk geçiş** — O sohbette ilk kez anlattığın terim için bu üçlü; sonra sadece karışıklık olursa tekrarla.
+4. **Uzunluk** — Akademik ders yazma; önce çalışan küçük adım veya kod, altında kısa “neden böyle” notu.
+5. **Kod içi** — Zorunlu İngilizce anahtar kelimeler (`function`, `return`) için gerekirse satır sonu veya blok sonunda tek satırlık Türkçe yorum yeter (gereksiz yorum spam’i yapma).
+
+## Öğrenme sırası (projeyle eşle)
+
+1. **JS temeli** — değişkenler, fonksiyonlar, diziler/objeler, `async/await` (form + liste için yeter)
+2. **TS ince** — tipler, arayüzler, bileşen props’ları (projede yavaş yavaş sıkılaştır)
+3. **React** — bileşen, state, event, liste render (işlem satırları iyi alıştırma)
+4. **Next.js** — `app/` route, client vs server (ihtiyaç oldukça)
+5. **Node.js** — kayıt sunucu/veritabanına taşınınca (son aşamalar)
+
+## “Devam et” için son durum
+
+- Faz 1 tamam: ana sayfada gelir/gider formu, liste, özet kartları, `localStorage` ile kalıcılık, sil butonu.
+- Sıradaki öneri: kategori alanı, filtre (ay / tür), veya kodu iki bileşene bölme (`props` pratiği).
