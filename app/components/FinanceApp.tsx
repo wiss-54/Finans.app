@@ -16,11 +16,16 @@ const money = new Intl.NumberFormat("tr-TR", {
 
 type CurrencyCode = "TRY" | "USD" | "EUR" | "GBP";
 
-const EXCHANGE_RATES: Record<CurrencyCode, number> = {
+/** API gelene kadar veya hata olunca kullanılan sabit kurlar (1 birim = kaç TRY). */
+const DEFAULT_EXCHANGE_RATES: Record<CurrencyCode, number> = {
   TRY: 1,
-  USD: 46.00,
-  EUR: 53.00,
-  GBP: 60.00,
+  USD: 46.0,
+  EUR: 53.0,
+  GBP: 60.0,
+};
+
+type ExchangeRates = Record<CurrencyCode, number> & {
+  updatedAt: string;
 };
 
 function newId() {
@@ -36,10 +41,53 @@ export function FinanceApp() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<CurrencyCode>("TRY");
   const [note, setNote] = useState("");
+  const [rates, setRates] = useState<ExchangeRates>(() => ({
+    ...DEFAULT_EXCHANGE_RATES,
+    updatedAt: new Date().toISOString(),
+  }));
 
   useEffect(() => {
     setItems(loadTransactions());
     setReady(true);
+  }, []);
+
+  /** Sayfa açılınca ve her 30 dakikada bir canlı kurları `/api/exchange-rates` üzerinden çeker. */
+  useEffect(() => {
+    let active = true;
+
+    async function loadRates() {
+      try {
+        const res = await fetch("/api/exchange-rates", { cache: "no-store" });
+        if (!res.ok) return;
+        const data: unknown = await res.json();
+        const r = data as Partial<ExchangeRates>;
+        if (
+          typeof r.TRY === "number" &&
+          typeof r.USD === "number" &&
+          typeof r.EUR === "number" &&
+          typeof r.GBP === "number" &&
+          typeof r.updatedAt === "string" &&
+          active
+        ) {
+          setRates({
+            TRY: r.TRY,
+            USD: r.USD,
+            EUR: r.EUR,
+            GBP: r.GBP,
+            updatedAt: r.updatedAt,
+          });
+        }
+      } catch {
+        // API yanıt vermezse mevcut rates (varsayılan veya son başarılı) kalır.
+      }
+    }
+
+    loadRates();
+    const timer = setInterval(loadRates, 1000 * 60 * 30);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -61,7 +109,7 @@ export function FinanceApp() {
     e.preventDefault();
     const value = Number(amount.replace(",", "."));
     if (!Number.isFinite(value) || value <= 0) return;
-    const rate = EXCHANGE_RATES[currency];
+    const rate = rates[currency];
     const amountInTry = value * rate;
     const trimmed = note.trim();
     if (!trimmed) return;
@@ -99,9 +147,13 @@ export function FinanceApp() {
       </section>
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="mb-4 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+        <h2 className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
           Yeni işlem
         </h2>
+        <p className="mt-1 mb-4 text-xs text-zinc-500 dark:text-zinc-400">
+          Kur güncelleme:{" "}
+          {new Date(rates.updatedAt).toLocaleString("tr-TR")}
+        </p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-3">
             <label className="flex items-center gap-2 text-sm">
@@ -148,14 +200,16 @@ export function FinanceApp() {
                 </select>
             </label>
             <label className="flex flex-col gap-1 text-sm">
-  <span className="text-zinc-600 dark:text-zinc-400">Açıklama</span>
-  <input
-    className="rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-    placeholder="Örn. Market, maaş"
-    value={note}
-    onChange={(e) => setNote(e.target.value)}
-  />
-</label>
+              <span className="text-zinc-600 dark:text-zinc-400">
+                Açıklama
+              </span>
+              <input
+                className="rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                placeholder="Örn. Market, maaş"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+            </label>
           </div>
           <button
             type="submit"
