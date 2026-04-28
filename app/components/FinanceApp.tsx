@@ -41,6 +41,10 @@ export function FinanceApp() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<CurrencyCode>("TRY");
   const [note, setNote] = useState("");
+  const [vendor, setVendor] = useState("");
+  const [invoiceUrl, setInvoiceUrl] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState("");
   const [rates, setRates] = useState<ExchangeRates>(() => ({
     ...DEFAULT_EXCHANGE_RATES,
     updatedAt: new Date().toISOString(),
@@ -119,11 +123,69 @@ export function FinanceApp() {
       kind,
       amount: amountInTry,
       note: trimmed,
+      vendor: vendor.trim() || undefined,
+      invoiceUrl: invoiceUrl || undefined,
       createdAt: new Date().toISOString(),
     };
     setItems((prev) => [row, ...prev]);
     setAmount("");
     setNote("");
+    setVendor("");
+    setInvoiceUrl("");
+    setScanError("");
+  }
+
+  async function handleInvoiceSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const form = new FormData();
+    form.append("file", file);
+    setScanning(true);
+    setScanError("");
+
+    try {
+      const res = await fetch("/api/invoice-scan", {
+        method: "POST",
+        body: form,
+      });
+      const data: unknown = await res.json();
+      if (!res.ok) {
+        setScanError("Fatura taranamadı. Lütfen tekrar dene.");
+        return;
+      }
+
+      const parsed = data as {
+        vendor?: string;
+        amount?: number | null;
+        currency?: CurrencyCode;
+        invoiceUrl?: string;
+      };
+
+      if (typeof parsed.vendor === "string" && parsed.vendor.trim()) {
+        setVendor(parsed.vendor.trim());
+        setNote((prev) => (prev.trim() ? prev : parsed.vendor!.trim()));
+      }
+      if (typeof parsed.amount === "number" && Number.isFinite(parsed.amount)) {
+        setAmount(String(parsed.amount));
+      }
+      if (
+        parsed.currency === "TRY" ||
+        parsed.currency === "USD" ||
+        parsed.currency === "EUR" ||
+        parsed.currency === "GBP"
+      ) {
+        setCurrency(parsed.currency);
+      }
+      if (typeof parsed.invoiceUrl === "string") {
+        setInvoiceUrl(parsed.invoiceUrl);
+      }
+    } catch {
+      setScanError("Fatura taranamadı. Lütfen tekrar dene.");
+    } finally {
+      setScanning(false);
+      e.target.value = "";
+    }
   }
 
   function remove(id: string) {
@@ -211,11 +273,49 @@ export function FinanceApp() {
               />
             </label>
           </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-zinc-600 dark:text-zinc-400">
+                Şirket (otomatik dolabilir)
+              </span>
+              <input
+                className="rounded-lg border border-zinc-300 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                placeholder="Örn. A101, Migros, Starbucks"
+                value={vendor}
+                onChange={(e) => setVendor(e.target.value)}
+              />
+            </label>
+            <div className="flex flex-col gap-1 text-sm">
+              <span className="text-zinc-600 dark:text-zinc-400">
+                Fatura fotoğrafı
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleInvoiceSelect}
+                className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+              />
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                {scanning
+                  ? "Fatura okunuyor..."
+                  : invoiceUrl
+                    ? "Fatura yüklendi ve kayıtla saklanacak."
+                    : "Fotoğraf çek veya galeriden seç."}
+              </p>
+              {scanError ? (
+                <p className="text-xs text-rose-600 dark:text-rose-400">
+                  {scanError}
+                </p>
+              ) : null}
+            </div>
+          </div>
           <button
             type="submit"
             className="rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+            disabled={scanning}
           >
-            Listeye ekle
+            {scanning ? "Fatura okunuyor..." : "Listeye ekle"}
           </button>
         </form>
       </section>
@@ -243,6 +343,21 @@ export function FinanceApp() {
                     {new Date(t.createdAt).toLocaleString("tr-TR")} ·{" "}
                     {t.kind === "income" ? "Gelir" : "Gider"}
                   </p>
+                  {t.vendor ? (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Şirket: {t.vendor}
+                    </p>
+                  ) : null}
+                  {t.invoiceUrl ? (
+                    <a
+                      href={t.invoiceUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      Faturayı aç
+                    </a>
+                  ) : null}
                 </div>
                 <div className="flex items-center gap-3">
                   <span

@@ -6,6 +6,8 @@ export type Transaction = {
   kind: TransactionKind;
   amount: number;
   note: string;
+  vendor?: string;
+  invoiceUrl?: string;
   createdAt: string;
 };
 
@@ -38,6 +40,8 @@ function isTransaction(x: unknown): x is Transaction {
     typeof o.amount === "number" &&
     Number.isFinite(o.amount) &&
     typeof o.note === "string" &&
+    (o.vendor === undefined || typeof o.vendor === "string") &&
+    (o.invoiceUrl === undefined || typeof o.invoiceUrl === "string") &&
     typeof o.createdAt === "string"
   );
 }
